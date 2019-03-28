@@ -1,0 +1,78 @@
+version: '2'
+services:
+
+  web:
+    image: ansible/awx_web
+    container_name: awx_web
+    depends_on:
+      - rabbitmq
+      - memcached
+      - postgres
+    ports:
+      - "8052:8052"
+    hostname: awx_web
+    user: root
+    restart: unless-stopped
+    volumes:
+      - "/docker/awx/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "/docker/awx/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "/docker/awx/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "/docker/awx/projects:/var/lib/awx/projects:rw"
+#      - "/docker/awx/ca-trust:/etc/pki/ca-trust/source/anchors:ro"
+  task:
+    image: ansible/awx_task
+    container_name: awx_task
+    depends_on:
+      - rabbitmq
+      - memcached
+      - web
+      - postgres
+    hostname: awx
+    user: root
+    restart: unless-stopped
+    volumes:
+      - "/docker/awx/SECRET_KEY:/etc/tower/SECRET_KEY"
+      - "/docker/awx/environment.sh:/etc/tower/conf.d/environment.sh"
+      - "/docker/awx/credentials.py:/etc/tower/conf.d/credentials.py"
+      - "/docker/awx/projects:/var/lib/awx/projects:rw"
+#      - "/docker/awx/ca-trust:/etc/pki/ca-trust/source/anchors:ro"
+    environment:
+      DATABASE_USER: "awx"
+      DATABASE_NAME: "awx"
+      DATABASE_HOST: "postgres"
+      DATABASE_PORT: "5432"
+      DATABASE_PASSWORD=: "Ch4ng3m3!"
+      MEMCACHED_HOST: "memcached"
+      RABBITMQ_HOST: "rabbitmq"
+      AWX_ADMIN_USER: "admin"
+      AWX_ADMIN_PASSWORD: "changeme"
+  
+  rabbitmq:
+    image: ansible/awx_rabbitmq
+    container_name: awx_rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_VHOST: "awx"
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
+      RABBITMQ_ERLANG_COOKIE: "cookiemonster"
+
+  memcached:
+    image: memcached:alpine
+    container_name: awx_memcached
+    hostname: memcached
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:9.6
+    hostname: postgres
+    container_name: awx_postgres
+    restart: unless-stopped
+    volumes:
+      - /docker/awx/pg/data:/var/lib/postgresql/data:Z
+    environment:
+      POSTGRES_USER: "awx"
+      POSTGRES_PASSWORD: "Ch4ng3m3!"
+      POSTGRES_DB: "awx"
+      PGDATA: /var/lib/postgresql/data/pgdata
