@@ -33,7 +33,7 @@ CHANNEL_LAYERS = {
 ```
 
 ## Write the secret key
- > echo "SUPERs3cr3tPassw0rd" > /docker/awx/SECRET
+ > echo "SUPERs3cr3tPassw0rd" > /docker/awx/SECRET_KEY
 
 
 ## Setup your /docker/awx/environment.sh file:
@@ -51,3 +51,22 @@ AWX_ADMIN_PASSWORD=guest
 ## Create the CA items:
   > docker exec awx_web '/usr/bin/update-ca-trust'
 
+# Other stuff
+
+When the ansible awx starts initially, you might see an exception like noted below, it is normal and the awx_task container will create the schema and then the awx_web will connect afterwards.
+
+```
+awx_web      |   File "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/django/utils/six.py", line 685, in reraise
+awx_web      |     raise value.with_traceback(tb)
+awx_web      |   File "/var/lib/awx/venv/awx/lib64/python3.6/site-packages/django/db/backends/utils.py", line 64, in execute
+awx_web      |     return self.cursor.execute(sql, params)
+awx_web      | ProgrammingError: relation "conf_setting" does not exist
+awx_web      | LINE 1: ...f_setting"."value", "conf_setting"."user_id" FROM "conf_sett...
+awx_web      |                                                              ^
+awx_web      | 
+awx_web      | WSGI app 0 (mountpoint='') ready in 3 seconds on interpreter 0x2436290 pid: 127 (default app)
+awx_web      | No previous hash foundRESULT 2
+awx_web      | OKREADY
+awx_task     |   Applying main.0001_initial... OK
+
+```
